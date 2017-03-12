@@ -1,0 +1,13 @@
+Package: quadprogXT
+Title: What the Package Does (one line, title case)
+Version: 0.0.0.9000
+Authors@R: person("Bob", "Harlow", email = "rharlow86@gmail.com",role = c("aut", "cre"))
+Description: This package extends the quadprog package to solve quadratic program with
+    absolute value constraints in addition to improving numerical stability.
+Depends: R (>= 3.3.2)
+Imports: quadprog
+License: GPL(>=2)
+Encoding: UTF-8
+LazyData: true
+Suggests: testthat
+RoxygenNote: 6.0.1
