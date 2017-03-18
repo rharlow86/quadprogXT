@@ -60,5 +60,10 @@ solve.QPXT <- function(Dmat, dvec, Amat, bvec, meq = 0, factorized = FALSE,
                        bvecL1Delta = NULL,
                        cvec = NULL
                        ){
-    2
+
+    norms <- normalizeConstraints(Amat, bvec)
+    Amat <- norms$Amat
+    bvec <- norms$bvec
+    comp <- convertToCompact(Amat)
+    return(quadprog::solve.QP.compact(Dmat, dvec, comp$Amat, comp$Aind, bvec, meq, factorized))
 }
