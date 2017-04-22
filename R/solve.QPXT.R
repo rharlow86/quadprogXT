@@ -4,18 +4,15 @@
 #' objective.  Additionally, this function implicitly takes advantage of sparsity in the constraint
 #' matrix and can improve numerical stability by normalizing the constraint matrix. For the
 #' rest of the documentation, assume that Dmat is n x n.\cr
-#' \preformatted{
 #' 
 #' The solver solves the following problem (each * corresponds to matrix multiplication):
-#'
-#' min( -t(dvec) * b + 1/2 t(b) * Dmat * b + -t(dvecPosNeg) %*% c(b_positive, b_negative))
-#' }
-#' \cr
-#' s.t. \cr
-#' t(Amat) * b >= bvec \cr
-#' t(AmatPosNeg) %*% c(b_positive, b_negative) >= bvecPosNeg
+#' \preformatted{
+#' min( -t(dvec) * b + 1/2 t(b) * Dmat * b + -t(dvecPosNeg) * c(b_positive, b_negative))
+#' s.t.
+#' t(Amat) * b >= bvec 
+#' t(AmatPosNeg) * c(b_positive, b_negative) >= bvecPosNeg
 #' s.t. b_positive, b_negative >= 0 and b = b_positive - b_negative
-#' 
+#' }
 #' 
 #' @inheritParams quadprog::solve.QP
 #'
