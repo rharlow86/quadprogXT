@@ -5,13 +5,7 @@ expandConstraints.originalConstraints <- function(cons, NABS, NABSCHANGE){
     return(cons)
 }
 
-expandConstraints.absConstraints <- function(cons, NABS, NABSCHANGE){
-    cons$Amat <- cbind(cons$Amat, matrix(0, nrow(cons$Amat), NABSCHANGE))
-    return(cons)
-}
-
-expandConstraints.absDeltaConstraints <- function(cons, NABS, NABSCHANGE){
-    stop("method incorrect")
+expandConstraints.posNegConstraints <- function(cons, NABS, NABSCHANGE){
     cons$Amat <- cbind(cons$Amat, matrix(0, nrow(cons$Amat), NABSCHANGE))
     return(cons)
 }

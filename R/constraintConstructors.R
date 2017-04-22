@@ -18,35 +18,34 @@ originalConstraints <- function(Amat, bvec, meq){
     }
 }
 
-absConstraints <- function(M, AmatL1, bvecL1){
+posNegConstraints <- function(AmatPosNeg, bvecPosNeg){
 
-    if(!is.null(AmatL1) & !is.null(bvecL1)){
+    if(!is.null(AmatPosNeg) & !is.null(bvecPosNeg)){
 
-        k <- nrow(M)
-        n <- ncol(M)
-        nvar <- n + k * 2
+        N <- nrow(AmatPosNeg) / 2
+        nvar <- 3 * N
 
-        if(nrow(AmatL1) != k || length(bvecL1) != ncol(AmatL1)){
-            stop("M, AmatL1 and bvecL1 are incompatible!")
+        if(ncol(AmatPosNeg) != length(bvecPosNeg)){
+            stop("AmatPosNeg and bvecPosNeg are incompatible!")
         }
 
-        AEQ <- matrix(0, k, nvar)
-        AEQ[ ,1:n] <- M
-        AEQ[ ,-(1:n)] <- cbind(-diag(k), diag(k))
+        AEQ <- matrix(0, N, nvar)
+        AEQ[1:N, 1:N] <- diag(N)
+        AEQ[ ,-(1:N)] <- cbind(-diag(N), diag(N))
         
-        AINEQ <- matrix(0, 2 * k, nvar)
-        AINEQ[ ,-(1:n)] <- diag(2 * k)
+        AINEQ <- matrix(0, 2 * N, nvar)
+        AINEQ[ ,-(1:N)] <- diag(2 * N)
         
-        AINEQL1 <- matrix(0, ncol(AmatL1), nvar)
-        AmatL1t <- t(AmatL1)
-        AINEQL1[ ,-(1:n)] <- cbind(AmatL1t, AmatL1t)
+        AINEQPosNeg <- t(AmatPosNeg)
+        AINEQPosNeg <- cbind(matrix(0, ncol(AmatPosNeg), N), AINEQPosNeg)
         
-        Amat <- rbind(AEQ, AINEQ, AINEQL1)
-        bvec <- c(rep(0,  k * 3), bvecL1)
+        
+        Amat <- rbind(AEQ, AINEQ, AINEQPosNeg)
+        bvec <- c(rep(0,  nvar), bvecPosNeg)
 
         cons <- structure(
             list(Amat = Amat, bvec = bvec, meq = nrow(AEQ)),
-            class = "absConstraints"
+            class = "posNegConstraints"
         )
         
         return(cons)
@@ -57,28 +56,4 @@ absConstraints <- function(M, AmatL1, bvecL1){
         
     }
            
-}
-
-absDeltaConstraints <- function(M, AmatL1Delta, bvecL1Delta, cvec, b0){
-
-    if(!is.null(cvec) || !is.null(AmatL1Delta)){
-        
-        if(!is.null(cvec)){
-            
-            if(length(cvec) != K || length(b0) != N){
-                stop("cvec, M and b0 are incompatible")
-            }
-        }
-        
-        if(!is.null(AmatL1Delta)){
-            
-            if((ncol(AmatL1Delta) != length(bvecL1Delta)) || length(b0) != N){
-                stop("AmatL1Delta, bvecL1Delta and b0 are incompatible")
-            }
-            
-        }
-        
-    }
-    
-    nullConstraint()
 }
