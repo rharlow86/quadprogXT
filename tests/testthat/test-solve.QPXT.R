@@ -29,4 +29,10 @@ test_that("QPXT still handles case where dvecPosNeg is not null (L1 norm penalty
     expect_true(sum(abs(resL1Penalty$solution[1:N]))  < sum(abs(resBase$solution)))
 })
 
-
+test_that("QPXT still handles case where dvecPosNeg is not null (L1 norm penalty)", {
+    b0 <- rep(.15, N)
+    thresh <- .25
+    res <- solve.QPXT(Dmat, dvec, Amat, bvec, b0 = b0,
+                      AmatPosNegDelta = matrix(rep(-1, 2 * N)), bvecPosNegDelta = -thresh)
+    expect_true(sum(abs(res$solution[1:N] - b0)) <= thresh + 1e-10)
+})
