@@ -1,8 +1,8 @@
 merge.quadprogXTConstraintList <- function(x, y = NULL, N, ...){
     
     consClasses <- sapply(x, class)
-    NABS <- any("posNegConstraints" %in% consClasses) * 2 * N
-    NABSCHANGE <- any("absDeltaConstraints" %in% consClasses) * 2 * N
+    NABS <- any("L1" %in% consClasses) * 2 * N
+    NABSCHANGE <- any("L1Delta" %in% consClasses) * 2 * N
 
     constraintListExp <- lapply(x, expandConstraints, NABS, NABSCHANGE)
     equalityConstraints <- lapply(constraintListExp, equalityConstraints)

@@ -7,11 +7,16 @@
 #' 
 #' The solver solves the following problem (each * corresponds to matrix multiplication):
 #' \preformatted{
-#' min( -t(dvec) * b + 1/2 t(b) * Dmat * b + -t(dvecPosNeg) * c(b_positive, b_negative))
+#' min(
+#' -t(dvec) * b + 1/2 t(b) * Dmat * b + -t(dvecPosNeg) * c(b_positive, b_negative)
+#'  + -t(dvecPosNegDelta) * c(deltab_positive, deltab_negative)
+#' )
 #' s.t.
 #' t(Amat) * b >= bvec 
 #' t(AmatPosNeg) * c(b_positive, b_negative) >= bvecPosNeg
-#' s.t. b_positive, b_negative >= 0 and b = b_positive - b_negative
+#' t(AmatPosNegChange) * c(deltab_positive, deltab_negative) >= bvecPosNegChange
+#' b_positive, b_negative >= 0, b = b_positive - b_negative
+#' deltab_positive >= 0, deltab_negative >= 0, b - b0 = deltab_positive - deltab_negative
 #' }
 #' 
 #' @inheritParams quadprog::solve.QP
@@ -25,6 +30,9 @@
 #' constraints and penalty on absolute changes in the decision variable from a starting point can
 #' be incorporated.  b0 is an n x 1 vector. Note that b0 is NOT a starting point for the
 #' optimization - that is handled implicitly by quadprog.
+#' @param AmatPosNegDelta l x 2n matrix of constraints on the positive and negative part of a change in b from a starting point, b0.
+#' @param bvecPosNegDelta l length vector of thresholds to the constraints in AmatPosNegDelta
+#' @param dvecPosNegDelta l x 2n vector of loadings in the objective function on the positive and negative part of changes in b from a starting point of b0.
 
 #' @details In order to handle constraints on b_positive and b_negative, slack variables are introduced.  The total number of parameters in the problem increases by the following amounts: \cr
 #' If all the new parameters (those not already used by quadprog) remain NULL, the problem size does not increase and quadprog::solve.QP is called after normalizing the constraint matrix and converting to a sparse matrix representation.\cr
@@ -40,7 +48,11 @@
 solve.QPXT <- function(Dmat, dvec, Amat, bvec, meq = 0, factorized = FALSE,
                        AmatPosNeg = NULL,
                        bvecPosNeg = NULL,
-                       dvecPosNeg = NULL
+                       dvecPosNeg = NULL,
+                       b0 = NULL,
+                       AmatPosNegDelta = NULL,
+                       bvecPosNegDelta = NULL,
+                       dvecPosNegDelta = NULL
                        ){
 
     N <- length(dvec)
@@ -48,7 +60,8 @@ solve.QPXT <- function(Dmat, dvec, Amat, bvec, meq = 0, factorized = FALSE,
     constraintList <- structure(
         list(
             originalConstraints(Amat, bvec, meq),
-            posNegConstraints(N, AmatPosNeg, bvecPosNeg, dvecPosNeg)
+            L1Constraints(N, AmatPosNeg, bvecPosNeg, dvecPosNeg, "L1"),
+            L1Constraints(N, AmatPosNegDelta, bvecPosNegDelta, dvecPosNegDelta, "L1Delta",b0)
         ),
         class = "quadprogXTConstraintList"
     )
