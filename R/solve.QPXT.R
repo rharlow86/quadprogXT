@@ -1,6 +1,6 @@
 #' Solve a quadratic program with absolute values in constraints & objective
 #'
-#' @description This function allows for absolute values in the constraint matrix and in the
+#' @description This function allows for absolute value constraints and absolute values in the
 #' objective.  Additionally, this function implicitly takes advantage of sparsity in the constraint
 #' matrix and can improve numerical stability by normalizing the constraint matrix. For the
 #' rest of the documentation, assume that Dmat is n x n.\cr
@@ -38,7 +38,6 @@
 #' @usage solve.QPXT(Dmat, dvec, Amat, bvec, meq = 0, factorized = FALSE)
 #' @export solve.QPXT
 solve.QPXT <- function(Dmat, dvec, Amat, bvec, meq = 0, factorized = FALSE,
-                       M = NULL,
                        AmatPosNeg = NULL,
                        bvecPosNeg = NULL,
                        dvecPosNeg = NULL
@@ -49,7 +48,7 @@ solve.QPXT <- function(Dmat, dvec, Amat, bvec, meq = 0, factorized = FALSE,
     constraintList <- structure(
         list(
             originalConstraints(Amat, bvec, meq),
-            posNegConstraints(AmatPosNeg, bvecPosNeg)
+            posNegConstraints(N, AmatPosNeg, bvecPosNeg, dvecPosNeg)
         ),
         class = "quadprogXTConstraintList"
     )

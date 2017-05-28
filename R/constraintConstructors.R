@@ -18,16 +18,11 @@ originalConstraints <- function(Amat, bvec, meq){
     }
 }
 
-posNegConstraints <- function(AmatPosNeg, bvecPosNeg){
+posNegConstraints <- function(N, AmatPosNeg, bvecPosNeg, dvecPosNeg){
 
-    if(!is.null(AmatPosNeg) & !is.null(bvecPosNeg)){
+    if(!is.null(AmatPosNeg) || !is.null(dvecPosNeg)){
 
-        N <- nrow(AmatPosNeg) / 2
         nvar <- 3 * N
-
-        if(ncol(AmatPosNeg) != length(bvecPosNeg)){
-            stop("AmatPosNeg and bvecPosNeg are incompatible!")
-        }
 
         AEQ <- matrix(0, N, nvar)
         AEQ[1:N, 1:N] <- diag(N)
@@ -35,10 +30,18 @@ posNegConstraints <- function(AmatPosNeg, bvecPosNeg){
         
         AINEQ <- matrix(0, 2 * N, nvar)
         AINEQ[ ,-(1:N)] <- diag(2 * N)
+
+        AINEQPosNeg <- NULL
         
-        AINEQPosNeg <- t(AmatPosNeg)
-        AINEQPosNeg <- cbind(matrix(0, ncol(AmatPosNeg), N), AINEQPosNeg)
+        if(!is.null(AmatPosNeg)){
+
+            if(ncol(AmatPosNeg) != length(bvecPosNeg)){
+                stop("AmatPosNeg and bvecPosNeg are incompatible!")
+            }            
         
+            AINEQPosNeg <- t(AmatPosNeg)
+            AINEQPosNeg <- cbind(matrix(0, ncol(AmatPosNeg), N), AINEQPosNeg)
+        }
         
         Amat <- rbind(AEQ, AINEQ, AINEQPosNeg)
         bvec <- c(rep(0,  nvar), bvecPosNeg)
