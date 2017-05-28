@@ -55,8 +55,12 @@ solve.QPXT <- function(Dmat, dvec, Amat, bvec, meq = 0, factorized = FALSE,
                        dvecPosNegDelta = NULL
                        ){
 
+    if(factorized){
+        stop("solve.QPXT does not handle a factorized Dmat (yet)")
+    }
+    
     N <- length(dvec)
-
+    
     constraintList <- structure(
         list(
             originalConstraints(Amat, bvec, meq),

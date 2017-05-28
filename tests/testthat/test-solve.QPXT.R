@@ -18,6 +18,9 @@ bvec <- c(rep(-1, N), rep(-1, N))
 
 resBase <- solve.QPXT(Dmat, dvec, Amat, bvec)
 
+test_that("call with factorized fails", {
+    expect_error(solve.QPXT(Dmat, dvec, Amat, bvec, factorized = TRUE))
+})
 
 test_that("QPXT returns expected results for sum of absolute values <= 1 example", {
     res <- solve.QPXT(Dmat, dvec, Amat, bvec, AmatPosNeg = matrix(rep(-1, 2 * N)), bvecPosNeg = -1)
