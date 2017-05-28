@@ -79,12 +79,16 @@ solve.QPXT <- function(Dmat, dvec, Amat, bvec, meq = 0, factorized = FALSE,
 
     if(NVAR > N){
         if(is.null(dvecPosNeg)){
-            dvecPosNeg <- rep(0, NVAR - N)
-        }        
+            dvecPosNeg <- rep(0, 2 * N * !is.null(constraintList[[2]]$Amat))
+        }
+
+        if(is.null(dvecPosNegDelta)){
+            dvecPosNegDelta <- rep(0, 2 * N * !is.null(constraintList[[3]]$Amat))
+        }
     }
 
     DMAT[1:N, 1:N] <- Dmat
-    DVEC <- c(dvec, dvecPosNeg)
+    DVEC <- c(dvec, dvecPosNeg, dvecPosNegDelta)
 
     comp <- convertToCompact(Amat)    
     res <- quadprog::solve.QP.compact(DMAT, DVEC, comp$Amat, comp$Aind, bvec, meq)
