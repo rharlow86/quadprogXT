@@ -9,16 +9,19 @@
 #' 
 #' The solver solves the following problem (each * corresponds to matrix multiplication):
 #' \preformatted{
-#' min(
-#' -t(dvec) * b + 1/2 t(b) * Dmat * b + -t(dvecPosNeg) * c(b_positive, b_negative)
-#'  + -t(dvecPosNegDelta) * c(deltab_positive, deltab_negative)
-#' )
+#' min:
+#' -t(dvec) * b + 1/2 t(b) * Dmat * b +
+#' -t(dvecPosNeg) * c(b_positive, b_negative) +
+#'  t(dvecPosNegDelta) * c(deltab_positive, deltab_negative)
+#' 
 #' s.t.
 #' t(Amat) * b >= bvec 
 #' t(AmatPosNeg) * c(b_positive, b_negative) >= bvecPosNeg
 #' t(AmatPosNegChange) * c(deltab_positive, deltab_negative) >= bvecPosNegChange
-#' b_positive, b_negative >= 0, b = b_positive - b_negative
-#' deltab_positive >= 0, deltab_negative >= 0, b - b0 = deltab_positive - deltab_negative
+#' b_positive, b_negative >= 0,
+#' b = b_positive - b_negative
+#' deltab_positive, deltab_negative >= 0,
+#' b - b0 = deltab_positive - deltab_negative
 #' }
 #' 
 #' @inheritParams quadprog::solve.QP
@@ -76,7 +79,8 @@
 
 #' resBase <- solveQPXT(Dmat, dvec, Amat, bvec)
 #' ##absolute value constraint on decision variable:
-#' res <- solveQPXT(Dmat, dvec, Amat, bvec, AmatPosNeg = matrix(rep(-1, 2 * N)), bvecPosNeg = -1)
+#' res <- solveQPXT(Dmat, dvec, Amat, bvec,
+#' AmatPosNeg = matrix(rep(-1, 2 * N)), bvecPosNeg = -1)
 #' sum(abs(res$solution[1:N]))
 #'
 #' ## penalty of L1 norm
