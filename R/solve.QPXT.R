@@ -33,7 +33,7 @@
 #' @param AmatPosNegDelta l x 2n matrix of constraints on the positive and negative part of a change in b from a starting point, b0.
 #' @param bvecPosNegDelta l length vector of thresholds to the constraints in AmatPosNegDelta
 #' @param dvecPosNegDelta l x 2n vector of loadings in the objective function on the positive and negative part of changes in b from a starting point of b0.
-
+#' @param tolerance tolerance along the diagonal of the expanded Dmat for slack variables
 #' @details In order to handle constraints on b_positive and b_negative, slack variables are introduced.  The total number of parameters in the problem increases by the following amounts: \cr
 #' If all the new parameters (those not already used by quadprog) remain NULL, the problem size does not increase and quadprog::solve.QP is called after normalizing the constraint matrix and converting to a sparse matrix representation.\cr
 #' If AmatPosNeg, bvecPosNeg or dvecPosNeg are not null, the problem size increases by 2 * n
@@ -52,7 +52,8 @@ solve.QPXT <- function(Dmat, dvec, Amat, bvec, meq = 0, factorized = FALSE,
                        b0 = NULL,
                        AmatPosNegDelta = NULL,
                        bvecPosNegDelta = NULL,
-                       dvecPosNegDelta = NULL
+                       dvecPosNegDelta = NULL,
+                       tol = 1e-8
                        ){
 
     if(factorized){
@@ -79,7 +80,7 @@ solve.QPXT <- function(Dmat, dvec, Amat, bvec, meq = 0, factorized = FALSE,
     
     NVAR <- nrow(Amat)
     DMAT <- matrix(0, NVAR, NVAR)
-    diag(DMAT) <- 1e-8
+    diag(DMAT) <- tol
 
     if(NVAR > N){
         if(is.null(dvecPosNeg)){
