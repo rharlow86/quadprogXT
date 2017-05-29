@@ -1,7 +1,9 @@
 #' Solve a quadratic program with absolute values in constraints & objective
 #'
-#' @description This function allows for absolute value constraints and absolute values in the
-#' objective.  Additionally, this function implicitly takes advantage of sparsity in the constraint
+#' @description solve.QPXT  allows for absolute value constraints and absolute values in the
+#' objective.  buildQP builds a parameter list that can then be passed to
+#' quadprog::solve.QP.compact directly if desired by the user.
+#' solve.QPXT implicitly takes advantage of sparsity in the constraint
 #' matrix and can improve numerical stability by normalizing the constraint matrix. For the
 #' rest of the documentation, assume that Dmat is n x n.\cr
 #' 
@@ -37,13 +39,15 @@
 #' @details In order to handle constraints on b_positive and b_negative, slack variables are introduced.  The total number of parameters in the problem increases by the following amounts: \cr
 #' If all the new parameters (those not already used by quadprog) remain NULL, the problem size does not increase and quadprog::solve.QP is called after normalizing the constraint matrix and converting to a sparse matrix representation.\cr
 #' If AmatPosNeg, bvecPosNeg or dvecPosNeg are not null, the problem size increases by 2 * n
-#'
+#' If AmatPosNegDelta or devecPosNegDelta are not null, the problem size increases by 2 * n.
+#' This results in a potential problem size of up to 5 * n.
 #' Despite the potential large increases in problem size, the underlying solver is written in
 #' Fortran and converges quickly for problems involving even hundreds of parameters.  Additionally,
 #' it has been the author's experience that solutions solved via the convex quadprog are much more
 #' stable than those solved by other methods (e.g. a non-linear solver).
 #'
-#' @usage solve.QPXT(Dmat, dvec, Amat, bvec, meq = 0, factorized = FALSE)
+#' Note that due to the fact that the constraints are normalized, the original constraint values the user passed will not be returned by buildQP. 
+#' @usage solve.QPXT(Dmat, dvec, Amat, bvec, meq = 0, factorized = FALSE, AmatPosNeg = NULL, bvecPosNeg = NULL, dvecPosNeg = NULL, b0 = NULL, AmatPosNegDelta = NULL, bvecPosNegDelta = NULL, dvecPosNegDelta = NULL, tol = 1e-8)
 #' @export solve.QPXT
 solve.QPXT <- function(Dmat, dvec, Amat, bvec, meq = 0, factorized = FALSE,
                        AmatPosNeg = NULL,
@@ -55,7 +59,26 @@ solve.QPXT <- function(Dmat, dvec, Amat, bvec, meq = 0, factorized = FALSE,
                        dvecPosNegDelta = NULL,
                        tol = 1e-8
                        ){
+    
+    args <- as.list(environment())
+    qpArgs <- do.call(buildQP, args)
+    res <- do.call(quadprog::solve.QP.compact, qpArgs)
+    return(res)
+}
 
+#' @rdname solve.QPXT
+#' @export
+buildQP <- function(Dmat, dvec, Amat, bvec, meq = 0, factorized = FALSE,
+                    AmatPosNeg = NULL,
+                    bvecPosNeg = NULL,
+                    dvecPosNeg = NULL,
+                    b0 = NULL,
+                    AmatPosNegDelta = NULL,
+                    bvecPosNegDelta = NULL,
+                    dvecPosNegDelta = NULL,
+                    tol = 1e-8
+                    ){
+    
     if(factorized){
         stop("solve.QPXT does not handle a factorized Dmat (yet)")
     }
@@ -96,7 +119,8 @@ solve.QPXT <- function(Dmat, dvec, Amat, bvec, meq = 0, factorized = FALSE,
     DVEC <- c(dvec, dvecPosNeg, dvecPosNegDelta)
 
     comp <- convertToCompact(Amat)    
-    res <- quadprog::solve.QP.compact(DMAT, DVEC, comp$Amat, comp$Aind, bvec, meq)
 
-    return(res)
+    list(Dmat = DMAT, dvec = DVEC, Amat = comp$Amat, Aind = comp$Aind, bvec = bvec, meq = meq,
+         factorized = factorized)
+
 }
