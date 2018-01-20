@@ -17,7 +17,7 @@
 #' s.t.
 #' t(Amat) * b >= bvec 
 #' t(AmatPosNeg) * c(b_positive, b_negative) >= bvecPosNeg
-#' t(AmatPosNegChange) * c(deltab_positive, deltab_negative) >= bvecPosNegChange
+#' t(AmatPosNegDelta) * c(deltab_positive, deltab_negative) >= bvecPosNegDelta
 #' b_positive, b_negative >= 0,
 #' b = b_positive - b_negative
 #' deltab_positive, deltab_negative >= 0,
@@ -133,19 +133,56 @@ buildQP <- function(Dmat, dvec, Amat, bvec, meq = 0, factorized = FALSE,
     if(factorized){
         stop("solveQPXT does not handle a factorized Dmat (yet)")
     }
+
+    N <- nrow(Dmat)
     
-    N <- length(dvec)
-    
-    constraintList <- structure(
-        list(
-            originalConstraints(Amat, bvec, meq),
-            L1Constraints(N, AmatPosNeg, bvecPosNeg, dvecPosNeg, "L1"),
-            L1Constraints(N, AmatPosNegDelta, bvecPosNegDelta, dvecPosNegDelta, "L1Delta",b0)
-        ),
-        class = "quadprogXTConstraintList"
+    problemType <- findProblemType(
+        dvecPosNeg,
+        AmatPosNeg,
+        dvecPosNegDelta,
+        AmatPosNegDelta
     )
-    
-    constraints <- merge(constraintList, N = N)    
+
+    switch(
+        problemType,
+        "posNegOnly" = {
+            constraints <- singleDummyMat(
+                N,
+                Amat,
+                bvec,
+                meq,
+                AmatPosNeg,
+                bvecPosNeg
+            )
+        },
+        "posNegDeltaOnly" = {
+            constraints <- singleDummyMat(
+                N,
+                Amat,
+                bvec,
+                meq,
+                AmatPosNegDelta,
+                bvecPosNegDelta,
+                b0
+            )
+        },
+        "full" = {
+            constraints <- fullProblemMatrix(
+                N,
+                Amat,
+                bvec,
+                meq,
+                AmatPosNeg,
+                bvecPosNeg,
+                AmatPosNegDelta,
+                bvecPosNegDelta,
+                b0
+            )
+        }, "standardQP" = {
+            constraints <- list(Amat = Amat, bvec = bvec, meq = meq)
+        }
+    )
+
     norms <- normalizeConstraints(constraints$Amat, constraints$bvec)
 
     Amat <- constraints$Amat
@@ -157,12 +194,12 @@ buildQP <- function(Dmat, dvec, Amat, bvec, meq = 0, factorized = FALSE,
     diag(DMAT) <- tol
 
     if(NVAR > N){
-        if(is.null(dvecPosNeg)){
-            dvecPosNeg <- rep(0, 2 * N * !is.null(constraintList[[2]]$Amat))
+        if(is.null(dvecPosNeg) && (problemType %in% c("posNegOnly", "full"))){
+            dvecPosNeg <- rep(0, 2 * N)
         }
 
-        if(is.null(dvecPosNegDelta)){
-            dvecPosNegDelta <- rep(0, 2 * N * !is.null(constraintList[[3]]$Amat))
+        if(is.null(dvecPosNegDelta) && (problemType %in% c("posNegDeltaOnly", "full"))){
+            dvecPosNegDelta <- rep(0, 2 * N)
         }
     }
 
