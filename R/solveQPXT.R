@@ -2,8 +2,8 @@
 #'
 #' @description solveQPXT  allows for absolute value constraints and absolute values in the
 #' objective.  buildQP builds a parameter list that can then be passed to
-#' quadprog::solve.QP.compact directly if desired by the user.
-#' solveQPXT implicitly takes advantage of sparsity in the constraint
+#' quadprog::solve.QP.compact or quadprog::solve.QP directly if desired by the user.
+#' solveQPXT by default implicitly takes advantage of sparsity in the constraint
 #' matrix and can improve numerical stability by normalizing the constraint matrix. For the
 #' rest of the documentation, assume that Dmat is n x n.\cr
 #' 
@@ -12,7 +12,7 @@
 #' min:
 #' -t(dvec) * b + 1/2 t(b) * Dmat * b +
 #' -t(dvecPosNeg) * c(b_positive, b_negative) +
-#'  t(dvecPosNegDelta) * c(deltab_positive, deltab_negative)
+#' -t(dvecPosNegDelta) * c(deltab_positive, deltab_negative)
 #' 
 #' s.t.
 #' t(Amat) * b >= bvec 
@@ -39,11 +39,14 @@
 #' @param bvecPosNegDelta l length vector of thresholds to the constraints in AmatPosNegDelta
 #' @param dvecPosNegDelta l x 2n vector of loadings in the objective function on the positive and negative part of changes in b from a starting point of b0.
 #' @param tol tolerance along the diagonal of the expanded Dmat for slack variables
+#' @param compact logical: if TRUE, it is assumed that we want to use solve.QP.compact to solve the problem, which handles sparsity.
+#' @param normalize logical: should constraint matrix be normalized
+#' 
 #' @details In order to handle constraints on b_positive and b_negative, slack variables are introduced.  The total number of parameters in the problem increases by the following amounts: \cr
 #' If all the new parameters (those not already used by quadprog) remain NULL, the problem size does not increase and quadprog::solve.QP is called after normalizing the constraint matrix and converting to a sparse matrix representation.\cr
-#' If AmatPosNeg, bvecPosNeg or dvecPosNeg are not null, the problem size increases by 2 * n
-#' If AmatPosNegDelta or devecPosNegDelta are not null, the problem size increases by 2 * n.
-#' This results in a potential problem size of up to 5 * n.
+#' If AmatPosNeg, bvecPosNeg or dvecPosNeg are not null, the problem size increases by n
+#' If AmatPosNegDelta or devecPosNegDelta are not null, the problem size increases by n.
+#' This results in a potential problem size of up to 3 * n.
 #' Despite the potential large increases in problem size, the underlying solver is written in
 #' Fortran and converges quickly for problems involving even hundreds of parameters.  Additionally,
 #' it has been the author's experience that solutions solved via the convex quadprog are much more
@@ -109,7 +112,8 @@ solveQPXT <- function(Dmat, dvec, Amat, bvec, meq = 0, factorized = FALSE,
                       bvecPosNegDelta = NULL,
                       dvecPosNegDelta = NULL,
                       tol = 1e-8,
-                      compact = TRUE
+                      compact = TRUE,
+                      normalize = TRUE
                       ){
     
     args <- as.list(environment())
@@ -135,7 +139,8 @@ buildQP <- function(Dmat, dvec, Amat, bvec, meq = 0, factorized = FALSE,
                     bvecPosNegDelta = NULL,
                     dvecPosNegDelta = NULL,
                     tol = 1e-8,
-                    compact = TRUE
+                    compact = TRUE,
+                    normalize = TRUE
                     ){
     
     if(factorized){
@@ -256,8 +261,13 @@ buildQP <- function(Dmat, dvec, Amat, bvec, meq = 0, factorized = FALSE,
         bvecPosNeg,
         bvecPosNegDelta
     )
-        
-    ##norms <- normalizeConstraints(constraints$Amat, constraints$bvec)        
+
+    if(normalize){
+        normCons <- normalizeConstraints(AMAT, BVEC)
+        AMAT <- normCons$Amat
+        BVEC <- normCons$bvec
+    }
+    
     NVAR <- N + M + L
     DMAT <- matrix(0, NVAR, NVAR)
     diag(DMAT) <- tol
