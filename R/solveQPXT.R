@@ -101,19 +101,26 @@
 #' range(res$solution - res2$solution)
 
 solveQPXT <- function(Dmat, dvec, Amat, bvec, meq = 0, factorized = FALSE,
-                       AmatPosNeg = NULL,
-                       bvecPosNeg = NULL,
-                       dvecPosNeg = NULL,
-                       b0 = NULL,
-                       AmatPosNegDelta = NULL,
-                       bvecPosNegDelta = NULL,
-                       dvecPosNegDelta = NULL,
-                       tol = 1e-8
-                       ){
+                      AmatPosNeg = NULL,
+                      bvecPosNeg = NULL,
+                      dvecPosNeg = NULL,
+                      b0 = NULL,
+                      AmatPosNegDelta = NULL,
+                      bvecPosNegDelta = NULL,
+                      dvecPosNegDelta = NULL,
+                      tol = 1e-8,
+                      compact = TRUE
+                      ){
     
     args <- as.list(environment())
     qpArgs <- do.call(buildQP, args)
-    res <- do.call(quadprog::solve.QP.compact, qpArgs)
+
+    if(compact){
+        res <- do.call(quadprog::solve.QP.compact, qpArgs)
+    }else{
+        res <- do.call(quadprog::solve.QP, qpArgs)
+    }
+    
     return(res)
 }
 
@@ -127,88 +134,161 @@ buildQP <- function(Dmat, dvec, Amat, bvec, meq = 0, factorized = FALSE,
                     AmatPosNegDelta = NULL,
                     bvecPosNegDelta = NULL,
                     dvecPosNegDelta = NULL,
-                    tol = 1e-8
+                    tol = 1e-8,
+                    compact = TRUE
                     ){
     
     if(factorized){
         stop("solveQPXT does not handle a factorized Dmat (yet)")
     }
 
+    ##number of decision variables
     N <- nrow(Dmat)
-    
-    problemType <- findProblemType(
-        dvecPosNeg,
-        AmatPosNeg,
-        dvecPosNegDelta,
-        AmatPosNegDelta
-    )
-
-    switch(
-        problemType,
-        "posNegOnly" = {
-            constraints <- singleDummyMat(
-                N,
-                Amat,
-                bvec,
-                meq,
-                AmatPosNeg,
-                bvecPosNeg
-            )
-        },
-        "posNegDeltaOnly" = {
-            constraints <- singleDummyMat(
-                N,
-                Amat,
-                bvec,
-                meq,
-                AmatPosNegDelta,
-                bvecPosNegDelta,
-                b0
-            )
-        },
-        "full" = {
-            constraints <- fullProblemMatrix(
-                N,
-                Amat,
-                bvec,
-                meq,
-                AmatPosNeg,
-                bvecPosNeg,
-                AmatPosNegDelta,
-                bvecPosNegDelta,
-                b0
-            )
-        }, "standardQP" = {
-            constraints <- list(Amat = Amat, bvec = bvec, meq = meq)
-        }
-    )
-
-    norms <- normalizeConstraints(constraints$Amat, constraints$bvec)
-
-    Amat <- constraints$Amat
-    bvec <- constraints$bvec
-    meq <- constraints$meq
-    
-    NVAR <- nrow(Amat)
-    DMAT <- matrix(0, NVAR, NVAR)
-    diag(DMAT) <- tol
-
-    if(NVAR > N){
-        if(is.null(dvecPosNeg) && (problemType %in% c("posNegOnly", "full"))){
-            dvecPosNeg <- rep(0, 2 * N)
-        }
-
-        if(is.null(dvecPosNegDelta) && (problemType %in% c("posNegDeltaOnly", "full"))){
-            dvecPosNegDelta <- rep(0, 2 * N)
-        }
+    ##M is equal length(|b|) or 0; L = length(|b - b0|) or 0
+    M <- L <- 0
+    if(!is.null(AmatPosNeg) || !is.null(dvecPosNeg)){
+        M <- N
     }
 
+    if(!is.null(AmatPosNegDelta) || !is.null(dvecPosNegDelta)){
+        L <- N
+    }
+    
+    if(is.null(Amat)){
+        Amat <- matrix(0, N, 0)
+    }
+    if(is.null(AmatPosNeg)){
+        AmatPosNeg <- matrix(0, 2 * M, 0)
+    }
+    if(is.null(AmatPosNegDelta)){
+        AmatPosNegDelta <- matrix(0, 2 * L, 0)
+    }
+    if(is.null(dvecPosNeg)){
+        dvecPosNeg <- matrix(0, 2 * M + 2 * L, 1)
+    }
+    if(is.null(dvecPosNegDelta)){
+        dvecPosNegDelta <- matrix(0, 2 * M + 2 * L, 1)
+    }
+
+    ##number of constraints
+    K <- ncol(Amat)
+    K1 <- ncol(AmatPosNeg)
+    K2 <- ncol(AmatPosNegDelta)
+
+    ##expand original constraints to problem size
+    Amat <- rbind(
+        Amat,
+        matrix(0, M + L, K)
+    )
+
+    ##create slack constraints: decision vector is: [b, |b|, |b - b0|]
+    AmatSlack <- cbind(
+        rbind(
+            diag(x = 1, N, M),
+            diag(x = 1, M, M),
+            matrix(0, L, M)
+        ),
+        rbind(
+            diag(x = -1, N, M),
+            diag(x = 1, M, M),
+            matrix(0, L, M)
+        ),
+        rbind(
+            diag(x = 1, N, L),
+            matrix(0, M, L),
+            diag(x = 1, L, L)            
+        ),
+        rbind(
+            diag(x = -1, N, L),
+            matrix(0, M, L),
+            diag(x = 1, L, L)
+        )
+    )
+    bvecSlack <- c(rep(0, M * 2), c(b0, b0 * -1))
+    
+    ##expand abs value constraint matrices
+    AmatAbs <- cbind(
+        rbind(
+            AmatPosNeg,
+            matrix(0, 2 * L, K1)
+        ),
+        rbind(
+            matrix(0, 2 * M, K2),
+            AmatPosNegDelta
+        )
+    )
+
+    ##Map the problem as stated in docs to [b, |b|, |b - b0|] to reduce dimensionality
+    MAP <- cbind(
+        rbind(
+            diag(x = .5, N, M),
+            diag(x = .5, M, M),
+            matrix(0, L, M)
+        ),
+        rbind(
+            diag(x = -.5, N, M),
+            diag(x = .5, M, M),
+            matrix(0, L, M)
+        ),
+        rbind(
+            diag(x = .5, N, L),
+            matrix(0, M, L),
+            diag(x = .5, L, L)
+        ),
+        rbind(
+            diag(x = -.5, N, L),
+            matrix(0, M, L),
+            diag(x = .5, L, L)
+        )
+    )
+
+    AmatAbs <- MAP %*% AmatAbs
+
+    AMAT <- cbind(
+        Amat,
+        AmatSlack,
+        AmatAbs
+    )
+
+    BVEC <- c(
+        bvec,
+        bvecSlack,
+        bvecPosNeg,
+        bvecPosNegDelta
+    )
+        
+    ##norms <- normalizeConstraints(constraints$Amat, constraints$bvec)        
+    NVAR <- N + M + L
+    DMAT <- matrix(0, NVAR, NVAR)
+    diag(DMAT) <- tol
     DMAT[1:N, 1:N] <- Dmat
-    DVEC <- c(dvec, dvecPosNeg, dvecPosNegDelta)
 
-    comp <- convertToCompact(Amat)    
+    ##dvec
+    dvec <- c(dvec, rep(0, M + L))
+    
+    DVEC <- dvec + MAP %*% dvecPosNeg + MAP %*% dvecPosNegDelta
 
-    list(Dmat = DMAT, dvec = DVEC, Amat = comp$Amat, Aind = comp$Aind, bvec = bvec, meq = meq,
-         factorized = factorized)
-
+    if(compact){
+        comp <- convertToCompact(AMAT)    
+        res <- list(
+            Dmat = DMAT,
+            dvec = DVEC,
+            Amat = comp$Amat,
+            Aind = comp$Aind,
+            bvec = BVEC,
+            meq = meq,
+            factorized = factorized
+        )
+    }else{
+        res <- list(
+            Dmat = DMAT,
+            dvec = DVEC,
+            Amat = AMAT,
+            bvec = BVEC,
+            meq = meq,
+            factorized = factorized
+        )
+    }
+    
+    res
 }
