@@ -39,3 +39,23 @@ test_that("QPXT handles absolute changes in decision variable", {
                       AmatPosNegDelta = matrix(rep(-1, 2 * N)), bvecPosNegDelta = -thresh)
     expect_true(sum(abs(res$solution[1:N] - b0)) <= thresh + 1e-10)
 })
+
+test_that("QPXT allows a null Amat IF other constraints are passed", {
+    res <- solveQPXT(Dmat, dvec, Amat = NULL, bvec = NULL, AmatPosNeg = matrix(rep(-1, 2 * N)), bvecPosNeg = -1)
+    expect_true(sum(abs(res$solution[1:N])) <= 1 + 1e-10)
+})
+
+test_that("QPXT works with full problem size", {
+    res <- try(solveQPXT(
+        Dmat,
+        dvec,
+        Amat = Amat,
+        bvec = bvec,
+        AmatPosNeg = matrix(rep(-1, 2 * N)),
+        bvecPosNeg = -1,
+        AmatPosNegDelta = matrix(rep(-1, 2 * N)),
+        bvecPosNegDelta = -.25,
+        b0 = rep(.08, N)
+    ))
+    expect_false(inherits(res, "try-error"))
+})
