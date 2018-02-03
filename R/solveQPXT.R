@@ -41,9 +41,10 @@
 #' @param tol tolerance along the diagonal of the expanded Dmat for slack variables
 #' @param compact logical: if TRUE, it is assumed that we want to use solve.QP.compact to solve the problem, which handles sparsity.
 #' @param normalize logical: should constraint matrix be normalized
+#' @param ... parameters to pass to buildQP when calling solveQPXT
 #' 
 #' @details In order to handle constraints on b_positive and b_negative, slack variables are introduced.  The total number of parameters in the problem increases by the following amounts: \cr
-#' If all the new parameters (those not already used by quadprog) remain NULL, the problem size does not increase and quadprog::solve.QP is called after normalizing the constraint matrix and converting to a sparse matrix representation.\cr
+#' If all the new parameters (those not already used by quadprog) remain NULL, the problem size does not increase and quadprog::solve.QP (.compact) is called after normalizing the constraint matrix and converting to a sparse matrix representation by default.\cr
 #' If AmatPosNeg, bvecPosNeg or dvecPosNeg are not null, the problem size increases by n
 #' If AmatPosNegDelta or devecPosNegDelta are not null, the problem size increases by n.
 #' This results in a potential problem size of up to 3 * n.
@@ -52,7 +53,7 @@
 #' it has been the author's experience that solutions solved via the convex quadprog are much more
 #' stable than those solved by other methods (e.g. a non-linear solver).
 #'
-#' Note that due to the fact that the constraints are normalized, the original constraint values the user passed will not be returned by buildQP. 
+#' Note that due to the fact that the constraints are by default normalized, the original constraint values the user passed will may not be returned by buildQP. 
 #' @export solveQPXT
 #'
 #' @examples
@@ -103,23 +104,11 @@
 #' res2 <- do.call(quadprog::solve.QP.compact, qp)
 #' range(res$solution - res2$solution)
 
-solveQPXT <- function(Dmat, dvec, Amat, bvec, meq = 0, factorized = FALSE,
-                      AmatPosNeg = NULL,
-                      bvecPosNeg = NULL,
-                      dvecPosNeg = NULL,
-                      b0 = NULL,
-                      AmatPosNegDelta = NULL,
-                      bvecPosNegDelta = NULL,
-                      dvecPosNegDelta = NULL,
-                      tol = 1e-8,
-                      compact = TRUE,
-                      normalize = TRUE
-                      ){
+solveQPXT <- function(...){                      
     
-    args <- as.list(environment())
-    qpArgs <- do.call(buildQP, args)
-
-    if(compact){
+    qpArgs <- do.call(buildQP, list(...))
+    
+    if(!is.null(qpArgs$Aind)){
         res <- do.call(quadprog::solve.QP.compact, qpArgs)
     }else{
         res <- do.call(quadprog::solve.QP, qpArgs)
