@@ -4,7 +4,6 @@ Version: 0.0.2
 Authors@R: person("Bob", "Harlow", email = "rharlow86@gmail.com",role = c("aut", "cre"))
 Description: Extends the quadprog package to solve quadratic programs with
     absolute value constraints and absolute values in the objective function.
-Depends: R (>= 3.3.2)
 Imports: quadprog
 License: GPL(>=2)
 Encoding: UTF-8
