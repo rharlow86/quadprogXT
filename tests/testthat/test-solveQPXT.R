@@ -59,3 +59,20 @@ test_that("QPXT works with full problem size", {
     ))
     expect_false(inherits(res, "try-error"))
 })
+
+test_that("QPXT works with full problem size & specified dvecs", {
+    res <- try(solveQPXT(
+        Dmat,
+        dvec,
+        Amat = Amat,
+        bvec = bvec,
+        AmatPosNeg = matrix(rep(-1, 2 * N)),
+        bvecPosNeg = -1,
+        AmatPosNegDelta = matrix(rep(-1, 2 * N)),
+        bvecPosNegDelta = -.25,
+        dvecPosNeg = rep(-.005, 2 * N),
+        dvecPosNegDelta = rep(-.0005, 2 * N),
+        b0 = rep(.08, N)
+    ))
+    expect_false(inherits(res, "try-error"))
+})

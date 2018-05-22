@@ -157,13 +157,7 @@ buildQP <- function(Dmat, dvec, Amat, bvec, meq = 0, factorized = FALSE,
     if(is.null(AmatPosNegDelta)){
         AmatPosNegDelta <- matrix(0, 2 * L, 0)
     }
-    if(is.null(dvecPosNeg)){
-        dvecPosNeg <- matrix(0, 2 * M + 2 * L, 1)
-    }
-    if(is.null(dvecPosNegDelta)){
-        dvecPosNegDelta <- matrix(0, 2 * M + 2 * L, 1)
-    }
-
+    
     ##number of constraints
     K <- ncol(Amat)
     K1 <- ncol(AmatPosNeg)
@@ -262,10 +256,19 @@ buildQP <- function(Dmat, dvec, Amat, bvec, meq = 0, factorized = FALSE,
     diag(DMAT) <- tol
     DMAT[1:N, 1:N] <- Dmat
 
-    ##dvec
+    ##dvec expansions
+    DVECPOSNEGDELTA <- DVECPOSNEG <- matrix(0, 2 * M + 2 * L, 1)
+    if(!is.null(dvecPosNeg)){
+        DVECPOSNEG[1:(2*M), 1] <- dvecPosNeg
+    }
+    
+    if(!is.null(dvecPosNegDelta)){
+        DVECPOSNEG[(2 * M + 1):(2 * M + 2 * L), 1] <- dvecPosNegDelta
+    }
+
     dvec <- c(dvec, rep(0, M + L))
     
-    DVEC <- dvec + MAP %*% dvecPosNeg + MAP %*% dvecPosNegDelta
+    DVEC <- dvec + MAP %*% DVECPOSNEG + MAP %*% DVECPOSNEGDELTA
 
     if(compact){
         comp <- convertToCompact(AMAT)    
