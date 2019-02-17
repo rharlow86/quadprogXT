@@ -27,17 +27,17 @@
 #' @inheritParams quadprog::solve.QP
 #'
 #' 
-#' @param AmatPosNeg k x 2n matrix of constraints on the positive and negative part of b
+#' @param AmatPosNeg 2n x k matrix of constraints on the positive and negative part of b
 #' @param bvecPosNeg k length vector of thresholds to the constraints in AmatPosNeg
-#' @param dvecPosNeg k x 2n vector of loadings on the positive and negative part of b, respectively
+#' @param dvecPosNeg k * 2n length vector of loadings on the positive and negative part of b, respectively
 #' 
 #' @param b0 a starting point that describes the 'current' state of the problem such that
 #' constraints and penalty on absolute changes in the decision variable from a starting point can
-#' be incorporated.  b0 is an n x 1 vector. Note that b0 is NOT a starting point for the
+#' be incorporated.  b0 is an n length vector. Note that b0 is NOT a starting point for the
 #' optimization - that is handled implicitly by quadprog.
-#' @param AmatPosNegDelta l x 2n matrix of constraints on the positive and negative part of a change in b from a starting point, b0.
+#' @param AmatPosNegDelta 2n x l matrix of constraints on the positive and negative part of a change in b from a starting point, b0.
 #' @param bvecPosNegDelta l length vector of thresholds to the constraints in AmatPosNegDelta
-#' @param dvecPosNegDelta l x 2n vector of loadings in the objective function on the positive and negative part of changes in b from a starting point of b0.
+#' @param dvecPosNegDelta l * 2n length vector of loadings in the objective function on the positive and negative part of changes in b from a starting point of b0.
 #' @param tol tolerance along the diagonal of the expanded Dmat for slack variables
 #' @param compact logical: if TRUE, it is assumed that we want to use solve.QP.compact to solve the problem, which handles sparsity.
 #' @param normalize logical: should constraint matrix be normalized
