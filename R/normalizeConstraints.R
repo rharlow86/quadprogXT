@@ -17,7 +17,7 @@ normalizeConstraints <- function(Amat, bvec){
         stop("At least one column of Amat has a zero 2-norm")
     }
 
-    Anorm <- sweep(Amat, 2, norm2, "/")
+    Anorm <- t.default(t.default(Amat) / norm2)
     
     list(
         Amat = Anorm,
