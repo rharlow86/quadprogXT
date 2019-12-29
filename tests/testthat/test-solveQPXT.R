@@ -18,10 +18,6 @@ bvec <- c(rep(-1, N), rep(-1, N))
 
 resBase <- solveQPXT(Dmat, dvec, Amat, bvec)
 
-test_that("call with factorized fails", {
-    expect_error(solveQPXT(Dmat, dvec, Amat, bvec, factorized = TRUE))
-})
-
 test_that("QPXT returns expected results for sum of absolute values <= 1 example", {
     res <- solveQPXT(Dmat, dvec, Amat, bvec, AmatPosNeg = matrix(rep(-1, 2 * N)), bvecPosNeg = -1)
     expect_true(sum(abs(res$solution[1:N])) <= 1 + 1e-10)
@@ -60,19 +56,29 @@ test_that("QPXT works with full problem size", {
     expect_false(inherits(res, "try-error"))
 })
 
+args <- list(
+    Dmat = Dmat,
+    dvec = dvec,
+    Amat = Amat,
+    bvec = bvec,
+    AmatPosNeg = matrix(rep(-1, 2 * N)),
+    bvecPosNeg = -1,
+    AmatPosNegDelta = matrix(rep(-1, 2 * N)),
+    bvecPosNegDelta = -.25,
+    dvecPosNeg = rep(-.005, 2 * N),
+    dvecPosNegDelta = rep(-.0005, 2 * N),
+    b0 = rep(.08, N)
+)
+
 test_that("QPXT works with full problem size & specified dvecs", {
-    res <- try(solveQPXT(
-        Dmat,
-        dvec,
-        Amat = Amat,
-        bvec = bvec,
-        AmatPosNeg = matrix(rep(-1, 2 * N)),
-        bvecPosNeg = -1,
-        AmatPosNegDelta = matrix(rep(-1, 2 * N)),
-        bvecPosNegDelta = -.25,
-        dvecPosNeg = rep(-.005, 2 * N),
-        dvecPosNegDelta = rep(-.0005, 2 * N),
-        b0 = rep(.08, N)
-    ))
-    expect_false(inherits(res, "try-error"))
+    expect_false(inherits(do.call(solveQPXT, args), "try-error"))
+})
+
+test_that("QPXT works with a factorized Dmat", {
+    res <- do.call(solveQPXT, args)
+    args2 <- args
+    args2$factorized <- TRUE
+    args2$Dmat <- solve(chol(args2$Dmat))
+    res2 <- do.call(solveQPXT, args2)
+    expect_equal(res, res2)
 })
