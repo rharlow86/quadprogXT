@@ -18,43 +18,48 @@ bvec <- c(rep(-1, N), rep(-1, N))
 
 resBase <- solveQPXT(Dmat, dvec, Amat, bvec)
 
-test_that("QPXT returns expected results for sum of absolute values <= 1 example", {
-    res <- solveQPXT(Dmat, dvec, Amat, bvec, AmatPosNeg = matrix(rep(-1, 2 * N)), bvecPosNeg = -1)
-    expect_true(sum(abs(res$solution[1:N])) <= 1 + 1e-10)
-})
+res <- solveQPXT(Dmat, dvec, Amat, bvec, AmatPosNeg = matrix(rep(-1, 2 * N)), bvecPosNeg = -1)
+expect_true(
+    sum(abs(res$solution[1:N])) <= 1 + 1e-10,
+    info = "QPXT returns expected results for sum of absolute values <= 1 example"
+)
 
-test_that("QPXT still handles case where dvecPosNeg is not null (L1 norm penalty)", {
-    resL1Penalty <- solveQPXT(Dmat, dvec, Amat, bvec, dvecPosNeg = -.005 * rep(1, 2 * N))
-    expect_true(sum(abs(resL1Penalty$solution[1:N]))  < sum(abs(resBase$solution)))
-})
+resL1Penalty <- solveQPXT(Dmat, dvec, Amat, bvec, dvecPosNeg = -.005 * rep(1, 2 * N))
+expect_true(
+    sum(abs(resL1Penalty$solution[1:N]))  < sum(abs(resBase$solution)),
+    info = "QPXT still handles case where dvecPosNeg is not null (L1 norm penalty)"
+)
 
-test_that("QPXT handles absolute changes in decision variable", {
-    b0 <- rep(.15, N)
-    thresh <- .25
-    res <- solveQPXT(Dmat, dvec, Amat, bvec, b0 = b0,
-                      AmatPosNegDelta = matrix(rep(-1, 2 * N)), bvecPosNegDelta = -thresh)
-    expect_true(sum(abs(res$solution[1:N] - b0)) <= thresh + 1e-10)
-})
+b0 <- rep(.15, N)
+thresh <- .25
+res <- solveQPXT(Dmat, dvec, Amat, bvec, b0 = b0,
+                 AmatPosNegDelta = matrix(rep(-1, 2 * N)), bvecPosNegDelta = -thresh)
+expect_true(
+    sum(abs(res$solution[1:N] - b0)) <= thresh + 1e-10,
+    info = "QPXT handles absolute changes in decision variable"
+)
 
-test_that("QPXT allows a null Amat IF other constraints are passed", {
-    res <- solveQPXT(Dmat, dvec, Amat = NULL, bvec = NULL, AmatPosNeg = matrix(rep(-1, 2 * N)), bvecPosNeg = -1)
-    expect_true(sum(abs(res$solution[1:N])) <= 1 + 1e-10)
-})
+res <- solveQPXT(Dmat, dvec, Amat = NULL, bvec = NULL, AmatPosNeg = matrix(rep(-1, 2 * N)), bvecPosNeg = -1)
+expect_true(
+    sum(abs(res$solution[1:N])) <= 1 + 1e-10,
+    info = "QPXT allows a null Amat IF other constraints are passed"
+)
 
-test_that("QPXT works with full problem size", {
-    res <- try(solveQPXT(
-        Dmat,
-        dvec,
-        Amat = Amat,
-        bvec = bvec,
-        AmatPosNeg = matrix(rep(-1, 2 * N)),
-        bvecPosNeg = -1,
-        AmatPosNegDelta = matrix(rep(-1, 2 * N)),
-        bvecPosNegDelta = -.25,
-        b0 = rep(.08, N)
-    ))
-    expect_false(inherits(res, "try-error"))
-})
+res <- try(solveQPXT(
+    Dmat,
+    dvec,
+    Amat = Amat,
+    bvec = bvec,
+    AmatPosNeg = matrix(rep(-1, 2 * N)),
+    bvecPosNeg = -1,
+    AmatPosNegDelta = matrix(rep(-1, 2 * N)),
+    bvecPosNegDelta = -.25,
+    b0 = rep(.08, N)
+))
+expect_false(
+    inherits(res, "try-error"),
+    info = "QPXT works with full problem size"
+)
 
 args <- list(
     Dmat = Dmat,
@@ -70,15 +75,18 @@ args <- list(
     b0 = rep(.08, N)
 )
 
-test_that("QPXT works with full problem size & specified dvecs", {
-    expect_false(inherits(do.call(solveQPXT, args), "try-error"))
-})
+expect_false(
+    inherits(do.call(solveQPXT, args), "try-error"),
+    info = "QPXT works with full problem size & specified dvecs"
+)
 
-test_that("QPXT works with a factorized Dmat", {
-    res <- do.call(solveQPXT, args)
-    args2 <- args
-    args2$factorized <- TRUE
-    args2$Dmat <- solve(chol(args2$Dmat))
-    res2 <- do.call(solveQPXT, args2)
-    expect_equal(res, res2)
-})
+
+res <- do.call(solveQPXT, args)
+args2 <- args
+args2$factorized <- TRUE
+args2$Dmat <- solve(chol(args2$Dmat))
+res2 <- do.call(solveQPXT, args2)
+expect_equal(
+    res, res2,
+    info = "QPXT works with a factorized Dmat"
+)
