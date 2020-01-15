@@ -132,10 +132,6 @@ buildQP <- function(Dmat, dvec, Amat, bvec, meq = 0, factorized = FALSE,
                     normalize = TRUE
                     ){
     
-    if(factorized){
-        stop("solveQPXT does not handle a factorized Dmat (yet)")
-    }
-
     ##number of decision variables
     N <- nrow(Dmat)
     ##M is equal length(|b|) or 0; L = length(|b - b0|) or 0
@@ -255,6 +251,11 @@ buildQP <- function(Dmat, dvec, Amat, bvec, meq = 0, factorized = FALSE,
     DMAT <- matrix(0, NVAR, NVAR)
     diag(DMAT) <- tol
     DMAT[1:N, 1:N] <- Dmat
+
+    if(factorized && (M + L) > 0){
+        slackIdx <- (N+1):NVAR
+        diag(DMAT)[slackIdx] <- 1 / sqrt(diag(DMAT)[slackIdx])
+    }
 
     ##dvec expansions
     DVECPOSNEGDELTA <- DVECPOSNEG <- matrix(0, 2 * M + 2 * L, 1)

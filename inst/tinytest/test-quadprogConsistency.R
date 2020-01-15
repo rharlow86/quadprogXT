@@ -9,6 +9,8 @@ qp <- quadprog::solve.QP(Dmat,dvec,Amat,bvec=bvec)
 
 qpXT <- solveQPXT(Dmat,dvec,Amat,bvec=bvec)
 
-test_that("quadprog & quadprogXT return same solution for quadprog example", {
-    expect_equal(qp$solution, qpXT$solution)
-})
+expect_equal(
+    qp$solution,
+    qpXT$solution,
+    info = "quadprog & quadprogXT return same solution for quadprog example"
+)
