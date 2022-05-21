@@ -53,7 +53,11 @@
 #' it has been the author's experience that solutions solved via the convex quadprog are much more
 #' stable than those solved by other methods (e.g. a non-linear solver).
 #'
-#' Note that due to the fact that the constraints are by default normalized, the original constraint values the user passed will may not be returned by buildQP. 
+#' Note that due to the fact that the constraints are by default normalized, the original constraint values the user passed will may not be returned by buildQP.
+#'
+#' @return a named list as returned by quadprog::solve.QP.compact. The first n elements of the 'solution' element is the solution vector to
+#' the problem and the remaining elements reflect slack variables and can be ignored.
+#' 
 #' @export solveQPXT
 #'
 #' @examples
