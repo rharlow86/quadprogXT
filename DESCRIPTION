@@ -1,9 +1,11 @@
 Package: quadprogXT
 Title: Quadratic Programming with Absolute Value Constraints
-Version: 0.0.5
-Authors@R: person("Bob", "Harlow", email = "rharlow86@gmail.com",role = c("aut", "cre"))
+Version: 0.0.6
+Authors@R: c(
+  person("Bob", "Harlow", email = "rharlow86@gmail.com", role = c("aut", "cre")),
+  person("Brian", "Koch", email = "ctrlxctrlc@proton.me", role = "ctb"))
 Description: Extends the quadprog package to solve quadratic programs with
-    absolute value constraints and absolute values in the objective function.
+  absolute value constraints and absolute values in the objective function.
 Imports: quadprog
 License: GPL(>=2)
 Encoding: UTF-8
