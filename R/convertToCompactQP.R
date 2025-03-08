@@ -18,7 +18,7 @@ convertToCompact <- function(A){
   mc <- max(cz)
 
   ## Throw an error if there are columns of all zeros.
-  if(any(cz) == 0) stop("Some columns of the constraint matrix are all zero.")
+  if(any(cz == 0)) stop("Some columns of the constraint matrix are all zero.")
 
   ## Build the output matrices.
   Amat <- matrix(data = 0, ncol = d[2L], nrow = mc)
