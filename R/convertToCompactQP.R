@@ -1,6 +1,6 @@
 #' Make a Constraint Matrix Compact
 #'
-#' @param A A constraint matrix as defined in solve.QP.
+#' @param Amat A constraint matrix as defined in solve.QP.
 #' @return A list containing the two elements to be passed to solve.QP.compact,
 #' each named accordingly.
 #' @seealso quadprog::solve.QP
