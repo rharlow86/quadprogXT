@@ -37,8 +37,10 @@ convertToCompact <- function(A){
   Aind[1L,] <- cz
 
   ## The entries in Aind (past the first row) correspond to the row index of
-  ## the non-zero elements in the input matrix.
-  Aind[-1L, ][io] <- row(A)[ii]
+  ## the non-zero elements in the input matrix. The expression below is a bit
+  ## nasty, however it's equivalent to row(A)[ii], just much faster when A is
+  ## sparse.
+  Aind[-1L, ][io] <- (ii - 1L) %% d[1L] + 1L
 
   ## Write the matrices to the output list and return.
   out <- list(Amat = Amat, Aind = Aind)
