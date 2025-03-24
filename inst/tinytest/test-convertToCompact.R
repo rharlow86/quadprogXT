@@ -19,6 +19,6 @@ expect_error(
 
 expect_equal(
   current = convertToCompact(AmatSparse)$Amat,
-  target = target$AmatCompact,
+  target = target$Amat,
   info = "Conversion to compact program ignores unconstrained variables in Amat."
 )
